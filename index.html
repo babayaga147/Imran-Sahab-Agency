@@ -355,7 +355,7 @@ document.getElementById('agencyEnquiryForm').addEventListener('submit', async fu
   }
   button.disabled=true; button.textContent='Sending…'; status.textContent='Submitting your enquiry securely…';
   try{
-    var response=await fetch('https://imran-sahab-agency-manager-sv7xfj.v2.appdeploy.ai/api/public/enquiries',{
+    var response=await fetch('/api/public/enquiries',{
       method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(payload)
     });
     var result=await response.json().catch(function(){return {}});
