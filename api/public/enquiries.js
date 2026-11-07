@@ -15,9 +15,14 @@ async function callUpstream(payload) {
     });
     const raw = await upstream.text();
     const contentType = upstream.headers.get('content-type') || '';
+    const headers = {};
+    ['server', 'via', 'www-authenticate', 'location', 'x-frame-options', 'cf-ray', 'x-request-id'].forEach((h) => {
+      const v = upstream.headers.get(h);
+      if (v) headers[h] = v;
+    });
     let data = null;
     try { data = raw ? JSON.parse(raw) : null; } catch (_) { /* not JSON */ }
-    return { ok: true, status: upstream.status, contentType, raw, data };
+    return { ok: true, status: upstream.status, contentType, headers, raw, data };
   } catch (error) {
     return { ok: false, error: error && error.name === 'AbortError' ? 'timeout' : String(error && error.message || error) };
   } finally {
@@ -47,7 +52,8 @@ module.exports = async function handler(req, res) {
       isJson: r.data !== null,
       jsonKeys: r.data && typeof r.data === 'object' ? Object.keys(r.data) : null,
       received: r.data ? r.data.received : undefined,
-      bodySnippet: r.raw.slice(0, 300),
+      upstreamHeaders: r.headers,
+      bodyText: r.raw.replace(/<style[\s\S]*?<\/style>|<script[\s\S]*?<\/script>/gi, '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 600),
     });
   }
 
