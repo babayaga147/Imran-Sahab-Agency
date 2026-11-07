@@ -353,6 +353,9 @@ document.getElementById('agencyEnquiryForm').addEventListener('submit', async fu
   if(!payload.name || !payload.message || (!payload.email && !payload.phone)){
     status.textContent='Please add your name, project details and at least one contact method (email or phone).'; return;
   }
+  if(payload.email && !/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(payload.email)){
+    status.textContent='Please check your email address, it does not look complete.'; return;
+  }
   button.disabled=true; button.textContent='Sending…'; status.textContent='Submitting your enquiry securely…';
   try{
     var response=await fetch('/api/public/enquiries',{
@@ -363,6 +366,7 @@ document.getElementById('agencyEnquiryForm').addEventListener('submit', async fu
     form.reset(); status.textContent='Thank you — your enquiry has been received. I will get back to you soon.';
     button.textContent='Enquiry sent';
   }catch(err){
+    console.error('Enquiry submission failed:', err);
     status.textContent='Sorry, your enquiry could not be submitted right now. Please use the WhatsApp button below or try again later.';
     button.textContent='Try again'; button.disabled=false;
   }

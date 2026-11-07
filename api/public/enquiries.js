@@ -1,39 +1,79 @@
+const ENDPOINT = 'https://imran-sahab-agency-manager-sv7xfj.v2.appdeploy.ai/api/public/enquiries';
+const TIMEOUT_MS = 12000;
+
+// Server-to-server call to the manager app. Returns what actually came back,
+// without throwing on non-JSON bodies, so failures can be diagnosed.
+async function callUpstream(payload) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+  try {
+    const upstream = await fetch(ENDPOINT, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      body: JSON.stringify(payload),
+      signal: controller.signal,
+    });
+    const raw = await upstream.text();
+    const contentType = upstream.headers.get('content-type') || '';
+    let data = null;
+    try { data = raw ? JSON.parse(raw) : null; } catch (_) { /* not JSON */ }
+    return { ok: true, status: upstream.status, contentType, raw, data };
+  } catch (error) {
+    return { ok: false, error: error && error.name === 'AbortError' ? 'timeout' : String(error && error.message || error) };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 module.exports = async function handler(req, res) {
   res.setHeader('Cache-Control', 'no-store');
 
   if (req.method === 'OPTIONS') {
-    res.setHeader('Allow', 'POST, OPTIONS');
+    res.setHeader('Allow', 'GET, POST, OPTIONS');
     return res.status(204).end();
   }
 
+  // Temporary health probe: GET /api/public/enquiries?probe=1
+  // Sends the honeypot payload, which the manager app ignores without saving anything,
+  // and reports exactly what the manager app returned. Remove once the form is confirmed working.
+  if (req.method === 'GET' && req.query && req.query.probe) {
+    const r = await callUpstream({ website: 'probe' });
+    if (!r.ok) return res.status(200).json({ probe: true, reachedUpstream: false, error: r.error });
+    return res.status(200).json({
+      probe: true,
+      reachedUpstream: true,
+      upstreamStatus: r.status,
+      upstreamContentType: r.contentType,
+      isJson: r.data !== null,
+      jsonKeys: r.data && typeof r.data === 'object' ? Object.keys(r.data) : null,
+      received: r.data ? r.data.received : undefined,
+      bodySnippet: r.raw.slice(0, 300),
+    });
+  }
+
   if (req.method !== 'POST') {
-    res.setHeader('Allow', 'POST, OPTIONS');
+    res.setHeader('Allow', 'GET, POST, OPTIONS');
     return res.status(405).json({ received: false, error: 'Method not allowed' });
   }
 
-  const endpoint = 'https://imran-sahab-agency-manager-sv7xfj.v2.appdeploy.ai/api/public/enquiries';
+  const r = await callUpstream(req.body || {});
 
-  try {
-    const upstream = await fetch(endpoint, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(req.body || {}),
-    });
+  if (!r.ok) {
+    console.error('Enquiry forwarding failed:', r.error);
+    return res.status(502).json({ received: false, error: 'The enquiry service is temporarily unavailable.', reason: r.error });
+  }
 
-    const raw = await upstream.text();
-    let data;
-    try {
-      data = raw ? JSON.parse(raw) : {};
-    } catch {
-      data = { error: 'The enquiry service returned an invalid response.' };
-    }
-
-    return res.status(upstream.status).json(data);
-  } catch (error) {
-    console.error('Enquiry forwarding failed:', error);
+  if (r.data === null) {
+    // Log status and a short snippet of the upstream reply (never the visitor's submission).
+    console.error('Enquiry service returned a non-JSON reply:', r.status, r.contentType, r.raw.slice(0, 300));
     return res.status(502).json({
       received: false,
-      error: 'The enquiry service is temporarily unavailable.',
+      error: 'The enquiry service returned an invalid response.',
+      upstreamStatus: r.status,
+      upstreamContentType: r.contentType,
     });
   }
+
+  if (r.status >= 400) console.error('Enquiry service error:', r.status, JSON.stringify(r.data).slice(0, 300));
+  return res.status(r.status).json(r.data);
 };
