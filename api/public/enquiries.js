@@ -38,6 +38,44 @@ module.exports = async function handler(req, res) {
     return res.status(204).end();
   }
 
+  // Temporary wider probe: GET /api/public/enquiries?probe=2
+  // Tries harmless variants (honeypot payload only, or plain GET/OPTIONS) to see what the manager app refuses on.
+  if (req.method === 'GET' && req.query && String(req.query.probe) === '2') {
+    const base = 'https://imran-sahab-agency-manager-sv7xfj.v2.appdeploy.ai';
+    const me = 'https://imransahabagency.vercel.app';
+    const ua = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0 Safari/537.36';
+    const post = { method: 'POST', body: JSON.stringify({ website: 'probe' }) };
+    const variants = {
+      a_post_default: [base + '/api/public/enquiries', { ...post, headers: { 'Content-Type': 'application/json' } }],
+      b_post_origin_referer_manager: [base + '/api/public/enquiries', { ...post, headers: { 'Content-Type': 'application/json', Origin: base, Referer: base + '/' } }],
+      c_post_browser_ua_origin_site: [base + '/api/public/enquiries', { ...post, headers: { 'Content-Type': 'application/json', 'User-Agent': ua, Accept: '*/*', Origin: me, Referer: me + '/' } }],
+      d_get_root: [base + '/', { method: 'GET', headers: { 'User-Agent': ua } }],
+      e_get_enquiries: [base + '/api/public/enquiries', { method: 'GET', headers: { 'User-Agent': ua } }],
+      f_options_preflight: [base + '/api/public/enquiries', { method: 'OPTIONS', headers: { Origin: me, 'Access-Control-Request-Method': 'POST', 'Access-Control-Request-Headers': 'content-type' } }],
+    };
+    const out = {};
+    await Promise.all(Object.entries(variants).map(async ([k, [url, opts]]) => {
+      const controller = new AbortController();
+      const timer = setTimeout(() => controller.abort(), TIMEOUT_MS);
+      try {
+        const u = await fetch(url, { ...opts, signal: controller.signal });
+        const raw = await u.text();
+        out[k] = {
+          status: u.status,
+          contentType: u.headers.get('content-type') || '',
+          server: u.headers.get('server') || '',
+          acao: u.headers.get('access-control-allow-origin') || '',
+          text: raw.replace(/<style[\s\S]*?<\/style>|<script[\s\S]*?<\/script>/gi, '').replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim().slice(0, 160),
+        };
+      } catch (e) {
+        out[k] = { error: e && e.name === 'AbortError' ? 'timeout' : String(e && e.message || e) };
+      } finally {
+        clearTimeout(timer);
+      }
+    }));
+    return res.status(200).json({ probe: 2, results: out });
+  }
+
   // Temporary health probe: GET /api/public/enquiries?probe=1
   // Sends the honeypot payload, which the manager app ignores without saving anything,
   // and reports exactly what the manager app returned. Remove once the form is confirmed working.
