@@ -116,14 +116,15 @@ section{padding-block:clamp(64px,8vw,136px) 0}
 .tags{display:flex;flex-wrap:wrap;gap:8px;margin:4px 0 8px}
 .tags span{font:400 .75rem var(--f-mono);padding:.3rem .65rem;border-radius:6px;background:var(--surface-2);border:1px solid var(--line);color:var(--muted)}
 .folio{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:clamp(18px,2.2vw,36px);padding-block:8px}
-.proj{position:relative;min-width:0;--accent:#1ea7ff;transition:transform .35s cubic-bezier(.2,.8,.2,1),opacity .3s,filter .3s;will-change:transform}
+.folio{perspective:1400px}
+.proj{position:relative;min-width:0;--accent:#1ea7ff;--rx:0deg;--ry:0deg;--mx:50%;--my:50%;transform:translateZ(0);transition:transform .55s cubic-bezier(.22,1,.36,1);will-change:transform}
 .proj-link{display:block;text-decoration:none;color:inherit;border-radius:18px}
-.proj-frame{position:relative;border-radius:18px;overflow:hidden;background:var(--surface);border:1px solid var(--line);box-shadow:0 1px 0 rgba(255,255,255,.04) inset,0 10px 30px -18px rgba(0,0,0,.8);transition:box-shadow .35s,border-color .35s}
+.proj-frame{position:relative;border-radius:18px;overflow:hidden;background:var(--surface);border:1px solid var(--line);box-shadow:0 1px 0 rgba(255,255,255,.04) inset,0 10px 30px -18px rgba(0,0,0,.8);transition:box-shadow .5s cubic-bezier(.22,1,.36,1),border-color .5s}
 .proj-bar{display:flex;align-items:center;gap:6px;padding:10px 14px;background:var(--surface-2);border-bottom:1px solid var(--line)}
 .proj-bar i{width:9px;height:9px;border-radius:50%;background:#2a3d55}
 .proj-bar span{margin-left:8px;flex:1;min-width:0;font:400 .72rem var(--f-mono);color:var(--muted);padding:.2rem .7rem;border-radius:999px;background:rgba(5,11,20,.6);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .proj-shot{position:relative;aspect-ratio:16/10;overflow:hidden;background:var(--surface-2)}
-.proj-shot img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:top center;transition:transform .6s cubic-bezier(.2,.8,.2,1),filter .35s}
+.proj-shot img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:top center;transition:transform .9s cubic-bezier(.22,1,.36,1)}
 .proj-tile{position:absolute;inset:0;display:none;align-content:center;justify-items:center;gap:10px;text-align:center;padding:24px;background:radial-gradient(120% 90% at 20% 0%,color-mix(in srgb,var(--accent) 38%,transparent),transparent 60%),linear-gradient(160deg,var(--surface-2),var(--bg))}
 .proj-tile b{font:800 clamp(1.5rem,2.6vw,2.4rem)/1.05 var(--f-display);letter-spacing:-.02em}
 .proj-tile small{font:500 .72rem var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--accent)}
@@ -132,28 +133,34 @@ section{padding-block:clamp(64px,8vw,136px) 0}
 .proj-meta h3{font-size:clamp(1.15rem,1.5vw,1.45rem);font-weight:700}
 .proj-meta span{font:400 .75rem var(--f-mono);color:var(--muted);white-space:nowrap}
 /* the pop-up panel */
-.proj-pop{position:absolute;left:12px;right:12px;bottom:12px;padding:18px 18px 16px;border-radius:14px;background:rgba(5,11,20,.86);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1px solid rgba(255,255,255,.14);box-shadow:0 24px 50px -20px rgba(0,0,0,.9);display:grid;gap:10px;opacity:0;transform:translateY(18px) scale(.97);pointer-events:none;transition:opacity .3s,transform .4s cubic-bezier(.2,.8,.2,1)}
+.proj-pop{position:absolute;left:0;right:0;bottom:0;padding:56px 18px 16px;display:grid;gap:10px;background:linear-gradient(to top,rgba(5,11,20,.94) 0,rgba(5,11,20,.78) 55%,rgba(5,11,20,0) 100%);opacity:0;transform:translateY(16px);pointer-events:none;transition:opacity .45s cubic-bezier(.22,1,.36,1),transform .55s cubic-bezier(.22,1,.36,1)}
+.proj-frame::after{content:"";position:absolute;inset:0;border-radius:inherit;pointer-events:none;opacity:0;background:radial-gradient(420px circle at var(--mx) var(--my),rgba(255,255,255,.22),transparent 55%);mix-blend-mode:soft-light;transition:opacity .5s}
 .proj-pop p{margin:0;color:#c3d2e0;font-size:.92rem;line-height:1.5}
 .proj-pop .tags{margin:0}
-.proj-pop .tags span{background:rgba(255,255,255,.06)}
+.proj-pop .tags span{background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.14)}
 .proj-go{display:inline-flex;align-items:center;gap:8px;justify-self:start;font:600 .85rem var(--f-body);color:var(--ink);background:var(--accent);padding:.5rem .95rem;border-radius:999px}
 .proj-go b{font-weight:600}
-@media (hover:hover){
-  .proj:hover,.proj:focus-within{transform:translateY(-12px) scale(1.035);z-index:5}
-  .proj:hover .proj-frame,.proj:focus-within .proj-frame{border-color:color-mix(in srgb,var(--accent) 70%,var(--line));box-shadow:0 40px 70px -24px rgba(0,0,0,.95),0 0 0 1px color-mix(in srgb,var(--accent) 50%,transparent),0 0 60px -12px color-mix(in srgb,var(--accent) 45%,transparent)}
-  .proj:hover .proj-shot img,.proj:focus-within .proj-shot img{transform:scale(1.07);filter:brightness(.55) saturate(1.1)}
+@media (hover:hover) and (prefers-reduced-motion:no-preference){
+  .proj:hover,.proj:focus-within{transform:translateY(-10px) scale(1.055) rotateX(var(--rx)) rotateY(var(--ry));z-index:5}
+  .proj:hover .proj-frame,.proj:focus-within .proj-frame{border-color:rgba(255,255,255,.85);box-shadow:0 0 0 2px rgba(255,255,255,.9),0 0 0 6px color-mix(in srgb,var(--accent) 38%,transparent),0 38px 60px -26px rgba(0,0,0,.9),0 0 70px -10px color-mix(in srgb,var(--accent) 60%,transparent)}
+  .proj:hover .proj-frame::after,.proj:focus-within .proj-frame::after{opacity:1}
+  .proj:hover .proj-shot img,.proj:focus-within .proj-shot img{transform:scale(1.06)}
   .proj:hover .proj-pop,.proj:focus-within .proj-pop{opacity:1;transform:none;pointer-events:auto}
-  .folio:has(.proj:hover) .proj:not(:hover){opacity:.5;filter:saturate(.6)}
+}
+@media (hover:hover) and (prefers-reduced-motion:reduce){
+  .proj:hover .proj-frame,.proj:focus-within .proj-frame{border-color:#fff}
+  .proj:hover .proj-pop,.proj:focus-within .proj-pop{opacity:1;transform:none;pointer-events:auto}
 }
 @media (hover:none),(max-width:620px){
-  .proj-pop{position:static;opacity:1;transform:none;pointer-events:auto;margin-top:10px;background:var(--surface);backdrop-filter:none;-webkit-backdrop-filter:none;box-shadow:none;border-color:var(--line)}
+  .proj-pop{position:static;opacity:1;transform:none;pointer-events:auto;padding:14px 16px 16px;background:var(--surface);border-top:1px solid var(--line)}
+  .proj-frame::after{display:none}
 }
-.proj-cta{grid-column:span 2}
+.proj-cta{grid-column:1/-1}
 .proj-cta,.proj-cta .proj-link,.proj-cta .proj-frame{height:100%}
-.proj-cta .proj-frame{display:grid;place-items:center;align-content:center;gap:14px;padding:clamp(28px,3vw,48px);text-align:center;border-style:dashed;background:radial-gradient(100% 100% at 50% 0%,rgba(25,230,180,.1),transparent 70%),var(--surface)}
+.proj-cta .proj-frame{display:grid;grid-template-columns:1fr;place-items:center;align-content:center;gap:14px;padding:clamp(28px,3vw,48px);text-align:center;border-style:dashed;background:radial-gradient(100% 100% at 50% 0%,rgba(25,230,180,.1),transparent 70%),var(--surface)}
 .proj-cta h3{font-size:clamp(1.5rem,2.2vw,2.2rem)}
 .proj-cta p{margin:0;color:var(--muted);max-width:32ch}
-.proj-cta .proj-go{--accent:var(--mint)}
+.proj-cta .proj-go{--accent:var(--mint);justify-self:center}
 
 /* process */
 .steps{display:grid;grid-template-columns:repeat(3,1fr);gap:clamp(20px,3vw,56px)}
@@ -194,7 +201,6 @@ footer{padding-block:40px 48px;display:flex;flex-wrap:wrap;justify-content:space
   .services{grid-template-columns:repeat(2,1fr)}
   .contact{grid-template-columns:1fr}
   .folio{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .proj-cta{grid-column:auto}
   .steps{grid-template-columns:1fr}
 }
 @media (max-width:900px){
@@ -389,23 +395,6 @@ img{max-width:100%}
           <div class="proj-meta"><h3>Silk &amp; Suede</h3><span>Boutique</span></div>
         </a>
       </article>
-      <article class="proj" style="--accent:#1ea7ff">
-        <a class="proj-link" href="https://t2transporter.vercel.app" target="_blank" rel="noopener" aria-label="Open the T2 Transporter live site">
-          <div class="proj-frame">
-            <div class="proj-bar"><i></i><i></i><i></i><span>t2transporter.vercel.app</span></div>
-            <div class="proj-shot">
-              <img src="assets/work/t2-transporter.jpg" alt="Screenshot of the T2 Transporter website" width="1200" height="750" loading="lazy" onerror="this.parentNode.classList.add('noshot');this.remove()">
-              <div class="proj-tile"><small>Web app</small><b>T2 Transporter</b></div>
-            </div>
-            <div class="proj-pop">
-              <div class="tags"><span>Web app</span><span>Dashboard</span></div>
-              <p>A web dashboard for a transport and freight booking service, built on React with a Supabase backend.</p>
-              <span class="proj-go">Visit live site <b aria-hidden="true">&#8599;</b></span>
-            </div>
-          </div>
-          <div class="proj-meta"><h3>T2 Transporter</h3><span>Web app</span></div>
-        </a>
-      </article>
       <article class="proj" style="--accent:#e8b04a">
         <a class="proj-link" href="https://culinary.vercel.app" target="_blank" rel="noopener" aria-label="Open the Culinary live site">
           <div class="proj-frame">
@@ -584,6 +573,28 @@ function sel(b){var v=b.parentElement.querySelector('.v');if(!v)return;var r=doc
   }
   function ready(){if(img.complete&&dep.complete&&img.naturalWidth&&dep.naturalWidth)start()}
   img.addEventListener('load',ready);dep.addEventListener('load',ready);ready();
+})();
+</script>
+<script>
+/* PS4-style focus tilt: cards lean slightly toward the pointer. Hover devices only, skipped for reduced motion. */
+(function(){
+  if(!window.matchMedia('(hover:hover)').matches||window.matchMedia('(prefers-reduced-motion:reduce)').matches)return;
+  document.querySelectorAll('.proj').forEach(function(card){
+    var raf=0,e;
+    card.addEventListener('pointermove',function(ev){
+      e=ev;if(raf)return;
+      raf=requestAnimationFrame(function(){
+        raf=0;var r=card.getBoundingClientRect(),x=(e.clientX-r.left)/r.width,y=(e.clientY-r.top)/r.height;
+        card.style.setProperty('--ry',((x-.5)*7).toFixed(2)+'deg');
+        card.style.setProperty('--rx',((.5-y)*5).toFixed(2)+'deg');
+        card.style.setProperty('--mx',(x*100).toFixed(1)+'%');
+        card.style.setProperty('--my',(y*100).toFixed(1)+'%');
+      });
+    });
+    card.addEventListener('pointerleave',function(){
+      card.style.setProperty('--rx','0deg');card.style.setProperty('--ry','0deg');
+    });
+  });
 })();
 </script>
 </body>
